@@ -9,23 +9,23 @@ import (
 
 
 type flow_in struct {
-		W_one	[1*2]byte    `json:"one"`
-		W_two	[1*2]byte    `json:"two"`
-		W_three	[1*2]byte    `json:"three"`
-		W_four	[1*2]byte    `json:"four"`
+		W_one	[65536]byte    `json:"one"`
+		W_two	[65536]byte    `json:"two"`
+		W_three	[65536]byte    `json:"three"`
+		W_four	[65536]byte    `json:"four"`
 	}
 
 type flow_encrypted struct {
-		W_four	[1*2]byte    `json:"four"`
+		W_four	[65536]byte    `json:"four"`
 	}
 
 type brand_in struct {
-	FreeNetUsage [1*10]byte    `json:"freeNetUsage"`
+	FreeNetUsage [1073741824]byte    `json:"freeNetUsage"`
 	Flow  []flow_in
 }
 
 type brand_out struct {
-	FreeNetUsage [1*10]byte    `json:"freeNetUsage"`
+	FreeNetUsage [1073741824]byte    `json:"freeNetUsage"`
 	Flow_encrypted  []flow_encrypted `json:"flow"`
 }
 
@@ -47,7 +47,6 @@ func Make_from(from string, destination string) Hold_all {
 	return nwave
 }
 
-
 func Make_key(h *Hold_all) error {
 	f, err := os.Open(h.from)
 	if err == nil {
@@ -60,18 +59,18 @@ func Make_key(h *Hold_all) error {
 		err := errors.New("zero hour")
 		return err
 	}
-	if fx.Size() > 0 && fx.Size() < 10 {
+	if fx.Size() > 0 && fx.Size() < 1073741824 {
 		h.endgame = fx.Size()
 	}
 
-	if  fx.Size() > 10 || fx.Size() == 10 {
+	if  fx.Size() > 1073741824 || fx.Size() == 1073741824 {
 		h.endgame = -1
 	}
 	
 	h.xf = new(brand_in)
 	
 	if h.endgame == -1 {
-		h.xs_pl = (fx.Size() - 10) / (1 * 2 * 4)
+		h.xs_pl = (fx.Size() - 1073741824) / (65536 * 4)
 		h.xf.Flow = make([]flow_in, h.xs_pl)
 		binary.Read(f, binary.LittleEndian, &h.xf.FreeNetUsage)
 		binary.Read(f, binary.LittleEndian, &h.xf.Flow)
@@ -133,7 +132,7 @@ func Key_ReadFull(h *Hold_all, bn_transfer []byte) (int, error) {
 
 func Close(h *Hold_all) {
 		if h.close_one == nil {
-			
+
 		} else {
 			h.close_one.Sync()
 		}
