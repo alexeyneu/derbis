@@ -7,6 +7,12 @@ import (
 	"encoding/binary"
 )
 
+type Breach struct
+{
+	io.ReadSeeker
+	fsize int64
+}
+
 
 type flow_in struct {
 		W_one	[65536]byte    `json:"one"`
@@ -40,6 +46,10 @@ type Hold_all struct {
 	btz io.ReadSeeker
 	endgame int64
 	close_one *os.File
+}
+
+func (bx *Breach) Size() int64 {
+	return bx.fsize
 }
 
 func Make_from(from string, destination string) Hold_all {
@@ -84,10 +94,10 @@ func Make_key(h *Hold_all) error {
 	return err
 }
 
-func Write_key(h *Hold_all) (int64, error) {
+func Write_key(h *Hold_all) (*Breach, error) {
 	if h.read_done == false {
 		err := errors.New("Read file first")
-		return 0, err
+		return nil, err
 	}
 	os.WriteFile(h.destination, []byte{}, 0755)
 	b, err := os.OpenFile(h.destination, os.O_RDWR, 0755)
@@ -109,25 +119,7 @@ func Write_key(h *Hold_all) (int64, error) {
 		h.close_one = b
 		h.flush_done = !false
 	}
-	return bfx.Size(), err
-}
-
-func Key_Seek(h *Hold_all, offset int64, whence int) (int64, error) {
-	if h.flush_done == false {
-		err := errors.New("Flush file first")
-		return 0, err
-	}
-	off, err := h.btz.Seek(offset, whence);
-	return off, err
-}
-
-func Key_ReadFull(h *Hold_all, bn_transfer []byte) (int, error) {
-	if h.flush_done == false {
-		err := errors.New("Flush file first")
-		return 0, err
-	}
-	numb, err := io.ReadFull(h.btz, bn_transfer)
-	return numb, err
+	return &Breach{ReadSeeker: b, fsize: bfx.Size()}, err
 }
 
 func Close(h *Hold_all) {
